@@ -59,7 +59,7 @@ function ProfileCard({ user }) {
   const classes = useStyles()
 
   if (user) {
-    const { displayName, email, totalProjects, totalQuery, joinDate } = user
+    const { username, email, totalProjects, totalQuery, joinDate } = user
     return (
       <>
         <Grid item xs={12} container justify="center">
@@ -74,9 +74,9 @@ function ProfileCard({ user }) {
                 <b>Email: </b> {email}
               </Typography>
               <Typography paragraph>
-                <b>Username: </b> {displayName}
+                <b>Username: </b> {username}
               </Typography>
-              <Typography paragraph>
+              {/* <Typography paragraph>
                 <b>Join Date:</b> {moment(joinDate).format('DD-MM-YYYY')}
               </Typography>
               <Typography paragraph>
@@ -84,7 +84,7 @@ function ProfileCard({ user }) {
               </Typography>
               <Typography paragraph>
                 <b>Total Query:</b> {totalQuery}
-              </Typography>
+              </Typography> */}
             </CardContent>
           </Card>
         </Grid>

@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { useHistory } from 'react-router-dom'
+import ReactFileReader from 'react-file-reader'
 import AppBar from '@material-ui/core/AppBar'
 import Toolbar from '@material-ui/core/Toolbar'
 import Typography from '@material-ui/core/Typography'
@@ -11,8 +12,12 @@ import CustomStepper from '../../components/stepper/CustomStepper'
 import { TextField } from '@material-ui/core'
 import CollaboratorCard from '../../components/card/CollaboratorCard'
 import { COLLABORATOR_TYPE } from '../../constants'
-import CustomTable from '../../components/table/CustomTable'
+import PublicCollaboratorTable from '../../components/table/PublicCollaboratorTable'
 import { FabAddIcon } from '../../components/fab-button/FabButton'
+import ContentList from '../list/ContentList'
+import { useSelector } from 'react-redux'
+import apiProject from '../../api/apiProject'
+import { BASE_URL } from '../../api/baseAxios'
 
 const styles = theme => ({
   paper: {
@@ -66,29 +71,40 @@ const collaboratorTypes = ['Public Collaborator', 'Private Collaborator']
 function getSteps() {
   return [
     'Basic Information',
-    'Enter Metadata',
-    'Configuration',
+    'Upload Metadata',
     'Collaborator Type',
     'Choose Collaborator'
   ]
 }
 
+const init_metaData = {
+  dataName: '',
+  totalRow: 0,
+  totalCol: 0,
+  columnLabels: [],
+  pv_ratio: 0.01,
+  epsilon: 0.5,
+  sensitivity: 1.0,
+  prob: 0.95,
+  scale_up: 2
+}
+
 function CreateProject(props) {
   const { classes } = props
   const history = useHistory()
+  const user = useSelector(state => state.auth.user)
 
   const [form, setForm] = React.useState({
+    fileName: '',
     title: '',
-    desc: '',
-    dataName: '',
-    totalRow: 0,
-    totalCol: 0,
-    factor: 0,
-    ratio: 0.0,
-    epsilon: 0.0
+    desc: ''
   })
 
+  const [metaData, setMetaData] = useState(init_metaData)
+
   const [activeStep, setActiveStep] = React.useState(0)
+
+  // Collaborator Type
   const [collaType, setCollaType] = React.useState(-1)
   const [privateArray, setPrivateArray] = React.useState([''])
   const [selected, setSelected] = React.useState([])
@@ -101,30 +117,47 @@ function CreateProject(props) {
 
   const handleNext = () => {
     if (activeStep === steps.length - 1) {
-      console.log({ ...form, selected, privateArray, collaType })
-      const project = {
-        ...form
+      const { id, username } = user
+      const submitProject = {
+        creatorId: id,
+        creatorName: username,
+        title: form.title,
+        desc: form.desc,
+        collaborators: selected,
+        creatorMetaData: {
+          ...metaData
+        }
       }
-      history.push('/')
+      submitForm(submitProject)
     } else {
       setActiveStep(prevActiveStep => prevActiveStep + 1)
     }
+  }
+
+  const submitForm = submitProject => {
+    console.log({ submitProject })
+
+    fetch(`${BASE_URL}/project/add`, {
+      method: 'POST',
+      body: JSON.stringify(submitProject)
+    })
+      .then(res => res.json())
+      .then(resJson => {
+        console.log({ resJson })
+        history.push('/projects')
+      })
+      .catch(e => console.log(e))
   }
 
   const handleBack = () => {
     console.log({ activeStep })
     switch (activeStep) {
       case 1: {
-        setForm({ ...form, dataName: '', totalRow: 0, totalCol: 0 })
+        setMetaData(init_metaData)
         break
       }
 
-      case 2: {
-        setForm({ ...form, factor: 1, ratio: 0.001, epsilon: 0.95 })
-        break
-      }
-
-      case 4: {
+      case 3: {
         setPrivateArray([''])
         setSelected([])
         setCollaType(-1)
@@ -159,17 +192,24 @@ function CreateProject(props) {
     setPrivateArray(newPrivateArray)
   }
 
+  const handleFiles = files => {
+    const jsonFile = files[0]
+    var readFile = new FileReader()
+    readFile.onload = e => {
+      const { name } = jsonFile
+      var contents = e.target.result
+      var json = JSON.parse(contents)
+      const newMeta = { ...json }
+
+      setForm(prevForm => ({ ...prevForm, fileName: name }))
+      setMetaData(prevMeta => ({ ...prevMeta, ...newMeta }))
+    }
+
+    readFile.readAsText(jsonFile)
+  }
+
   const renderStep = () => {
-    const {
-      title,
-      desc,
-      dataName,
-      totalRow,
-      totalCol,
-      factor,
-      ratio,
-      epsilon
-    } = form
+    const { title, desc } = form
     switch (activeStep) {
       case 0:
         return (
@@ -192,94 +232,38 @@ function CreateProject(props) {
             />
           </Grid>
         )
-        break
 
       case 1:
         return (
-          <Grid item xs={12}>
-            <TextField
-              required
-              id="standard-required"
-              label="Data Name"
-              value={dataName}
-              onChange={handleChange('dataName')}
-              variant="outlined"
-              style={{ width: '40%' }}
-            />
-            <TextField
-              required
-              label="Total Rows"
-              variant="outlined"
-              value={totalRow}
-              onChange={handleChange('totalRow')}
-              type="number"
-              style={{ width: '20%', margin: '0px 12px' }}
-              inputProps={{
-                min: 0
-              }}
-            />
-            <TextField
-              required
-              label="Total Columns"
-              variant="outlined"
-              value={totalCol}
-              type="number"
-              onChange={handleChange('totalCol')}
-              style={{ width: '20%' }}
-              inputProps={{
-                min: 0
-              }}
-            />
+          <Grid item container alignItems="center" justify="center" xs={12}>
+            <Grid item xs={8} md={10}>
+              <TextField
+                value={form.fileName}
+                label="Upload MetaData JSON File"
+                variant="outlined"
+                fullWidth
+                disabled
+              />
+            </Grid>
+            <Grid item xs={4} md={2} style={{ paddingLeft: 12 }}>
+              <ReactFileReader handleFiles={handleFiles} fileTypes=".json">
+                <Button
+                  variant="contained"
+                  color="primary"
+                  component="span"
+                  style={{ height: '100%' }}
+                >
+                  Upload Metadata
+                </Button>
+              </ReactFileReader>
+            </Grid>
+            <Grid item xs={12} container>
+              {metaData.dataName && <ContentList {...{ metaData }} />}
+            </Grid>
           </Grid>
         )
-        break
 
       case 2:
-        return (
-          <Grid item xs={12}>
-            <TextField
-              required
-              id="standard-required"
-              label="Scale Up Factor"
-              value={factor}
-              onChange={handleChange('factor')}
-              variant="outlined"
-              type="number"
-              style={{ width: '40%' }}
-              inputProps={{
-                min: 0
-              }}
-            />
-            <TextField
-              required
-              label="PV Ratio"
-              variant="outlined"
-              value={ratio}
-              onChange={handleChange('ratio')}
-              type="number"
-              style={{ width: '20%', margin: '0px 12px' }}
-              inputProps={{
-                step: 0.001,
-                min: 0
-              }}
-            />
-            <TextField
-              required
-              label="Epsilon Value"
-              variant="outlined"
-              value={epsilon}
-              type="number"
-              onChange={handleChange('epsilon')}
-              style={{ width: '20%' }}
-              inputProps={{
-                step: 0.01,
-                min: 0
-              }}
-            />
-          </Grid>
-        )
-        break
-      case 3:
         return (
           <Grid item container justify="space-evenly" xs={12}>
             {collaboratorTypes.map((title, index) => (
@@ -290,9 +274,8 @@ function CreateProject(props) {
             ))}
           </Grid>
         )
-        break
 
-      case 4:
+      case 3:
         if (collaType === COLLABORATOR_TYPE.PRIVATE_COLLABORATOR) {
           return (
             <Grid item xs={12}>
@@ -320,7 +303,10 @@ function CreateProject(props) {
         } else if (collaType === COLLABORATOR_TYPE.PUBLIC_COLLABORATOR) {
           return (
             <Grid item xs={12}>
-              <CustomTable selected={selected} setSelected={setSelected} />
+              <PublicCollaboratorTable
+                selected={selected}
+                setSelected={setSelected}
+              />
             </Grid>
           )
         } else {
@@ -334,29 +320,20 @@ function CreateProject(props) {
   }
 
   const getDisableStatus = () => {
-    const { title, dataName, totalRow, totalCol, factor, ratio, epsilon } = form
-
+    const { title } = form
     switch (activeStep) {
       case 0: {
         return !title
       }
-
       case 1: {
-        return !(dataName && totalRow && totalCol)
+        return !metaData.dataName
       }
-
       case 2: {
-        return !(factor && ratio && epsilon)
-      }
-
-      case 3: {
         return collaType === -1
       }
-
-      case 4: {
+      case 3: {
         return !privateArray.length || !selected.length
       }
-
       default:
         return false
     }

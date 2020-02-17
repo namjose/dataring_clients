@@ -4,29 +4,13 @@ import {
   ThemeProvider,
   withStyles
 } from '@material-ui/core/styles'
-import {
-  BrowserRouter as Router,
-  Route,
-  Switch,
-  Redirect
-} from 'react-router-dom'
 import CssBaseline from '@material-ui/core/CssBaseline'
 import Hidden from '@material-ui/core/Hidden'
 import Typography from '@material-ui/core/Typography'
-import Link from '@material-ui/core/Link'
 import Navigator from './Navigator'
-import Content from './Content'
 import { Header } from '../../components'
 
-import Request from '../request/Request'
-import CreateProject from '../create-project/CreateProject'
-import ProjectDetail from '../project-detail/ProjectDetail'
-import CreateQuery from '../create-query/CreateQuery'
-import QueryDetail from '../query-detail/QueryDetail'
-import JoinProject from '../join-project/JoinProject'
-import Profile from '../user-profile/Profile'
-
-import Projects from '../projects/Projects'
+import MainRoutes from '../../routes/MainRoutes'
 
 function Copyright() {
   return (
@@ -104,7 +88,7 @@ theme = {
         margin: '0 16px',
         minWidth: 0,
         padding: 0,
-        [theme.breakpoints.up('md')]: {
+        [theme.breakpoints.up('lg')]: {
           padding: 0,
           minWidth: 0
         }
@@ -156,7 +140,7 @@ const styles = {
     minHeight: '100vh'
   },
   drawer: {
-    [theme.breakpoints.up('sm')]: {
+    [theme.breakpoints.up('md')]: {
       width: drawerWidth,
       flexShrink: 0
     }
@@ -190,7 +174,7 @@ function Paperbase(props) {
       <div className={classes.root}>
         <CssBaseline />
         <nav className={classes.drawer}>
-          <Hidden smUp implementation="js">
+          <Hidden mdUp implementation="js">
             <Navigator
               PaperProps={{ style: { width: drawerWidth } }}
               variant="temporary"
@@ -198,31 +182,14 @@ function Paperbase(props) {
               onClose={handleDrawerToggle}
             />
           </Hidden>
-          <Hidden xsDown implementation="css">
+          <Hidden smDown implementation="css">
             <Navigator PaperProps={{ style: { width: drawerWidth } }} />
           </Hidden>
         </nav>
         <div className={classes.app}>
           <Header onDrawerToggle={handleDrawerToggle} headerTitle="" />
           <main className={classes.main}>
-            <Switch>
-              <Route exact path="/" component={Projects} />
-              <Route exact path="/projects" component={Projects} />
-              <Route
-                exact
-                path="/projects/projectDetail/:projectId"
-                component={ProjectDetail}
-              />
-              <Route exact path="/queries/:queryId" component={QueryDetail} />
-              <Route exact path="/projects/create" component={CreateProject} />
-              <Route
-                exact
-                path="/requests/join/:projectId"
-                component={JoinProject}
-              />
-              <Route exact path="/requests" component={Request} />
-              <Route exact path="/user/id/:userId" component={Profile} />
-            </Switch>
+            <MainRoutes />
           </main>
           <footer className={classes.footer}>
             <Copyright />

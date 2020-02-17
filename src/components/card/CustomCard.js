@@ -7,6 +7,7 @@ import Button from '@material-ui/core/Button'
 import Typography from '@material-ui/core/Typography'
 import { CardActionArea } from '@material-ui/core'
 import { useHistory } from 'react-router-dom'
+import { useSelector } from 'react-redux'
 
 const useStyles = makeStyles({
   card: {
@@ -28,7 +29,7 @@ const useStyles = makeStyles({
 export default function CustomCard({ item }) {
   const history = useHistory()
   const classes = useStyles()
-  const { id, title, content, status } = item
+  const { id, title, desc, status } = item
 
   const hanldeOnClick = () => {
     history.push(`/projects/projectDetail/${id}`)
@@ -36,7 +37,11 @@ export default function CustomCard({ item }) {
 
   return (
     <Card className={classes.card}>
-      <CardActionArea disabled={status.includes('Not')} onClick={hanldeOnClick}>
+      <CardActionArea
+        style={{ minHeight: 175 }}
+        disabled={!status}
+        onClick={hanldeOnClick}
+      >
         <CardContent>
           <Typography
             className={classes.title}
@@ -52,12 +57,12 @@ export default function CustomCard({ item }) {
           adjective
         </Typography> */}
           <Typography variant="body2" component="p">
-            {content}
+            {desc}
           </Typography>
         </CardContent>
         <CardActions>
           <Button disabled size="small">
-            &nbsp;Status: {status}
+            &nbsp;Status: {status ? 'Ready' : 'Not Ready'}
           </Button>
         </CardActions>
       </CardActionArea>

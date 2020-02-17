@@ -1,77 +1,57 @@
-import React from 'react'
+import React, { useState, useEffect, useReducer } from 'react'
 import PropTypes from 'prop-types'
 import { useHistory, Route, BrowserRouter } from 'react-router-dom'
-import { makeStyles } from '@material-ui/core/styles'
 import AppBar from '@material-ui/core/AppBar'
 import Tabs from '@material-ui/core/Tabs'
 import Tab from '@material-ui/core/Tab'
 import Typography from '@material-ui/core/Typography'
-import Box from '@material-ui/core/Box'
 import { Grid } from '@material-ui/core'
 import SimpleTable from '../table/SimpleTable'
 import {
-  collaboratorStatusData,
   collaboratorStatusHead,
   queryListHead,
   queryListData
 } from '../../constants/mockupData'
 import CreateQuery from '../../containers/create-query/CreateQuery'
-import SimpleExpansionPanel from '../expension/SimpleExpansionPanel'
-import UploadButton from '../upload-button/UploadButton'
 import { UploadPartialView } from './UploadPartialView'
+import { TabPanel } from './TabPanel'
+import { useStyles } from './useStyles'
+import QueryList from '../query-list/QueryList'
+import CollabTable from '../table/CollabTable'
 
-function TabPanel(props) {
-  const { children, value, index, ...other } = props
-
-  return (
-    <Typography
-      component="div"
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box p={3}>{children}</Box>}
-    </Typography>
-  )
-}
-
-function a11yProps(index) {
-  return {
-    id: `simple-tab-${index}`,
-    'aria-controls': `simple-tabpanel-${index}`
-  }
-}
-
-const useStyles = makeStyles(theme => ({
-  root: {
-    flexGrow: 1,
-    backgroundColor: theme.palette.background.paper
-  },
-  tabContainer: {
-    border: '1px solid #bdbdbd'
-  },
-  input: {
-    display: 'none'
-  }
-}))
-
-export default function CustomTabs({ tabLabels = [] }) {
+export default function CustomTabs({
+  tabLabels = [],
+  projectDetail,
+  sampleVectorState,
+  loadSampleVector,
+  partialViewState,
+  handleFiles,
+  submitPartialView,
+  downloadOpt,
+  handleChooseDownloadOpt,
+  isPVReady,
+  isVectorReady,
+  project
+}) {
   const classes = useStyles()
-  const history = useHistory()
 
-  const [value, setValue] = React.useState(0)
+  const [value, setValue] = React.useState(4)
 
   const handleChange = (event, newValue) => {
     setValue(newValue)
   }
 
-  const onRowClick = queryId => event => {
-    history.push(`/queries/${queryId}`)
-  }
+  const renderTabPanel = detail => {
+    const { title, desc, collaborators } = detail
 
-  const renderTabPanel = () => {
+    const formatCollaborators = collaborators.map((item, idx) => {
+      return {
+        id: item,
+        name: item
+        // status: 'Ready'
+      }
+    })
+
     switch (value) {
       case 0:
         return (
@@ -82,13 +62,11 @@ export default function CustomTabs({ tabLabels = [] }) {
               </Grid>
               <Grid item xs={12} style={{ margin: '24px 0px' }}>
                 <Typography variant="h6">Project Title</Typography>
-                <Typography variant="p">
-                  Part A, Part B and Part C - Public Data Exchange
-                </Typography>
+                <Typography variant="body1">{title}</Typography>
               </Grid>
               <Grid item xs={12}>
                 <Typography variant="h6">Project Description</Typography>
-                <Typography variant="p">Public Data Exchange</Typography>
+                <Typography variant="body1">{desc}</Typography>
               </Grid>
             </Grid>
           </TabPanel>
@@ -108,11 +86,11 @@ export default function CustomTabs({ tabLabels = [] }) {
                 <Typography variant="h5">Collaborators</Typography>
               </Grid>
               <Grid item xs={12} style={{ margin: '24px 0px' }}>
-                {/* <Typography variant="p">No result</Typography> */}
+                {/* <Typography variant="body1">No result</Typography> */}
 
-                <SimpleTable
+                <CollabTable
                   headCells={collaboratorStatusHead}
-                  data={collaboratorStatusData}
+                  data={formatCollaborators}
                 />
               </Grid>
             </Grid>
@@ -120,48 +98,51 @@ export default function CustomTabs({ tabLabels = [] }) {
         )
 
       case 2:
-        return (
+        return !isPVReady ? (
           <TabPanel value={value} index={2}>
-            <UploadPartialView classes={classes} />
+            {sampleVectorState && (
+              <UploadPartialView
+                loadSampleVector={loadSampleVector}
+                sampleVectorState={sampleVectorState}
+                classes={classes}
+                handleFiles={handleFiles}
+                partialViewState={partialViewState}
+                submitPartialView={submitPartialView}
+                downloadOpt={downloadOpt}
+                handleChooseDownloadOpt={handleChooseDownloadOpt}
+              />
+            )}
+          </TabPanel>
+        ) : (
+          <TabPanel value={value} index={2}>
+            <Grid
+              container
+              alignItems="center"
+              justify="center"
+              style={{ height: 400 }}
+            >
+              <Typography>Partial View Uploaded !!!</Typography>
+            </Grid>
           </TabPanel>
         )
 
       case 3:
         return (
           <TabPanel value={value} index={3}>
-            <CreateQuery />
+            <CreateQuery project={project} />
           </TabPanel>
         )
 
       case 4:
         return (
           <TabPanel value={value} index={4}>
-            <Grid container>
-              <Grid
-                item
-                xs={12}
-                container
-                direction="row"
-                justify="space-between"
-              >
-                <Typography variant="h5">Query List</Typography>
-              </Grid>
-              <Grid item xs={12} style={{ margin: '24px 0px' }}>
-                {/* <Typography variant="p">No result</Typography> */}
-
-                <SimpleTable
-                  headCells={queryListHead}
-                  data={queryListData}
-                  onRowClick={onRowClick}
-                />
-              </Grid>
-            </Grid>
+            <QueryList {...{ project }} />
           </TabPanel>
         )
     }
   }
 
-  return (
+  return projectDetail ? (
     <div className={classes.root}>
       <AppBar position="static">
         <Tabs
@@ -171,15 +152,20 @@ export default function CustomTabs({ tabLabels = [] }) {
         >
           {tabLabels.map((item, index) => (
             <Tab
+              disabled={
+                (!isPVReady && [3, 4].includes(index)) ||
+                (!isVectorReady && index === 2)
+              }
               key={index}
               label={item}
-              {...a11yProps(index)}
               //   disabled={item === 'Queries'}
             />
           ))}
         </Tabs>
       </AppBar>
-      <div className={classes.tabContainer}>{renderTabPanel()}</div>
+      <div className={classes.tabContainer}>
+        {renderTabPanel(projectDetail)}
+      </div>
     </div>
-  )
+  ) : null
 }

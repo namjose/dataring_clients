@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import AppBar from '@material-ui/core/AppBar'
 import Toolbar from '@material-ui/core/Toolbar'
 import Typography from '@material-ui/core/Typography'
@@ -10,6 +10,8 @@ import DeleteForeverIcon from '@material-ui/icons/DeleteForever'
 import { Grid, IconButton, Button } from '@material-ui/core'
 import DetailCard from '../../components/card/DetailCard'
 import { useHistory } from 'react-router-dom'
+import apiQuery from '../../api/apiQuery'
+import formatting from '../../utils/formatting'
 
 const styles = theme => ({
   paper: {
@@ -38,7 +40,20 @@ function QueryDetail(props) {
   const { classes } = props
   const history = useHistory()
 
-  const { queryId } = props.match.params
+  const queryId = props.match.params.id
+
+  const [detail, setDetail] = useState(null)
+
+  useEffect(() => {
+    apiQuery
+      .getQueryDetailById(queryId)
+      .then(res => {
+        const { data } = res
+        const format = formatting.formatObjFromAPI(data)
+        setDetail(format)
+      })
+      .catch(e => console.log(e))
+  }, [])
 
   const handleDeleteQuery = () => {
     console.log('Delete')
@@ -58,18 +73,16 @@ function QueryDetail(props) {
             <Grid item xs>
               <Typography>Query Detail</Typography>
             </Grid>
-            <Grid item>
+            {/* <Grid item>
               <IconButton onClick={handleDeleteQuery}>
                 <DeleteForeverIcon />
               </IconButton>
-            </Grid>
+            </Grid> */}
           </Grid>
         </Toolbar>
       </AppBar>
       <div className={classes.ResultWrapper}>
-        <Grid container>
-          <DetailCard queryId={queryId} />
-        </Grid>
+        <Grid container>{detail && <DetailCard detail={detail} />}</Grid>
       </div>
     </Paper>
   )

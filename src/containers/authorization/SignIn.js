@@ -16,6 +16,10 @@ import {
 } from '@material-ui/core'
 import Visibility from '@material-ui/icons/Visibility'
 import VisibilityOff from '@material-ui/icons/VisibilityOff'
+import baseAxios, { BASE_URL } from '../../api/baseAxios'
+import { signInSuccesful, signInRejected } from '../../actions/authActions'
+import { connect } from 'react-redux'
+import { apiAuth } from '../../api'
 
 const styles = (theme: Theme) =>
   createStyles({
@@ -104,31 +108,37 @@ class SignIn extends React.Component {
 
   _handleSubmit = event => {
     event.preventDefault()
+
+    const { signInSuccesful, signInRejected } = this.props
+
     const { email, password } = this.state
-    // if (email && password) {
-    //   auth
-    //     .signInWithEmailAndPassword(email, password)
-    //     .then(user => {
-    //       localStorage.setItem("auth", true);
-    //       this.props.history.push("/");
-    //     })
-    //     .catch(error => {
-    //       const errorCode = error.code;
-    //       const errorMessage = error.message;
-    //       if (errorCode === "auth/wrong-password") {
-    //         alert("Wrong password.");
-    //       } else {
-    //         alert(errorMessage);
-    //       }
-    //       console.log(error);
-    //     });
-    // }
+    if (email && password) {
+      fetch(`${BASE_URL}/user/signIn`, {
+        method: 'POST',
+        body: JSON.stringify({
+          email,
+          password
+        })
+      })
+        .then(res => res.json())
+        .then(data => {
+          // console.log({ data })
+          console.log({ data })
+          if (data.id) {
+            const { stringId, email, username, isAdmin } = data
+            const user = { id: stringId, email, username, isAdmin }
+            signInSuccesful(user)
+          } else {
+            signInRejected()
+          }
 
-    // localStorage.setItem('auth', true)
-
-    this.props.history.push('/')
-
-    this.setState({ email: '', password: '' })
+          // this.props.history.push('/')
+        })
+        .catch(e => {
+          console.log(e)
+          signInRejected()
+        })
+    }
   }
 
   render() {
@@ -152,36 +162,6 @@ class SignIn extends React.Component {
             <Typography align="center" className={classes.title}>
               Sign in
             </Typography>
-            {/* <br />
-            <br />
-            <Button
-              className={classes.button}
-              //   onClick={signInWithGoogle}
-              fullWidth
-              variant="contained"
-              style={{ backgroundColor: 'white' }}
-            >
-              <Icon className={clsx(classes.leftIcon, 'fab fa-google')} />
-              Sign in with google
-            </Button> */}
-            {/* <div className={classes.dividerContainer}>
-              <div style={{ flex: 1 }}>
-                <Divider className={classes.leftIcon} />
-              </div>
-              <div
-                style={{
-                  display: 'flex',
-                  flex: 3,
-                  justifyContent: 'center',
-                  alignItems: 'center'
-                }}
-              >
-                <Typography>Or sign in with email</Typography>
-              </div>
-              <div style={{ flex: 1 }}>
-                <Divider className={classes.rightIcon} />
-              </div>
-            </div> */}
             <TextField
               label="Your email"
               value={email}
@@ -247,4 +227,13 @@ class SignIn extends React.Component {
   }
 }
 
-export default withStyles(styles)(SignIn)
+// const mapStateToProps = (state) => ({
+
+// })
+
+const mapDispatchToProps = {
+  signInSuccesful,
+  signInRejected
+}
+
+export default withStyles(styles)(connect(null, mapDispatchToProps)(SignIn))

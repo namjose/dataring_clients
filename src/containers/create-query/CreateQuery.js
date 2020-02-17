@@ -1,17 +1,18 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { makeStyles } from '@material-ui/core/styles'
 import MuiExpansionPanel from '@material-ui/core/ExpansionPanel'
 import MuiExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary'
 import MuiExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails'
 import Typography from '@material-ui/core/Typography'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
-import DeleteForeverIcon from '@material-ui/icons/DeleteForever'
-import { Grid, IconButton, Button } from '@material-ui/core'
+import { Grid, Button, LinearProgress } from '@material-ui/core'
 import { withStyles } from '@material-ui/core/styles'
-import { collaboratorsOnProject, columnList } from '../../constants/mockupData'
-import CustomTextfield from '../../components/custom-textfield/CustomTextfield'
+import { columnList } from '../../constants/mockupData'
 import { FabAddIcon } from '../../components/fab-button/FabButton'
-import MultipleSelect from '../../components/multi-select/MultipleSelect'
+import { useDispatch, useSelector } from 'react-redux'
+import apiMeta from '../../api/apiMeta'
+import { QueryForm } from './QueryForm'
+import apiQuery from '../../api/apiQuery'
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -68,24 +69,64 @@ const ExpansionPanelSummary = withStyles({
   expanded: {}
 })(MuiExpansionPanelSummary)
 
-const ExpansionPanelDetails = withStyles(theme => ({
+export const ExpansionPanelDetails = withStyles(theme => ({
   root: {
     padding: theme.spacing(2)
   }
 }))(MuiExpansionPanelDetails)
 
-export default function CreateQuery() {
-  const classes = useStyles()
+const intialState = [
+  {
+    id: 1,
+    selectedCollaborators: '',
+    selectedColumns: [],
+    columnValues: [],
+    expanded: true
+  }
+]
 
-  const [queryList, setQueryList] = React.useState([
-    {
-      id: 1,
-      selectedCollaborators: [],
-      selectedColumns: [],
-      columnValues: [],
-      expanded: true
+export default function CreateQuery({ project }) {
+  const classes = useStyles()
+  const user = useSelector(state => state.auth.user)
+
+  const [submitLoading, setSubmitLoading] = useState(false)
+
+  const [collaboratorState, setCollaboratorState] = useState({
+    collaboratorsOnProject: [],
+    isLoading: false
+  })
+
+  useEffect(() => {
+    const { collaborators, id } = project
+    let userIdList = []
+    userIdList = collaborators.filter(item => item !== user.id)
+    if (project.creatorId !== user.id) {
+      userIdList.push(project.creatorId)
     }
-  ])
+    setCollaboratorState({
+      ...collaboratorState,
+      isLoading: true
+    })
+
+    apiMeta
+      .getMultiMetaByIdPair(userIdList.toString(), id)
+      .then(res => {
+        const { data } = res
+        const formatData = data.map(item => {
+          const { userId, columnLabels } = item
+          return { userId, columnLabels }
+        })
+
+        setCollaboratorState({
+          ...collaboratorState,
+          isLoading: false,
+          collaboratorsOnProject: formatData
+        })
+      })
+      .catch(e => console.log(e))
+  }, [])
+
+  const [queryList, setQueryList] = React.useState(intialState)
 
   const handleSelect = (idx, name) => event => {
     const newQueryList = queryList.map((item, index) => {
@@ -131,7 +172,7 @@ export default function CreateQuery() {
       ...queryList,
       {
         id: queryList.length + 1,
-        selectedCollaborators: [],
+        selectedCollaborators: '',
         selectedColumns: [],
         columnValues: [],
         expanded: true
@@ -143,18 +184,47 @@ export default function CreateQuery() {
     setQueryList(queryList.filter((item, index) => index !== idx))
   }
 
-  const handleOnSubmit = () => {
-    console.log({ queryList })
+  const handleOnSubmit = async () => {
+    setSubmitLoading(true)
+    try {
+      const submitColumns = []
+      const { collaboratorsOnProject } = collaboratorState
+      for (const query of queryList) {
+        const { selectedCollaborators, columnValues } = query
+        const columnList = columnValues.map(item => {
+          const { name, value } = item
+          const defaultColumns = collaboratorsOnProject.find(
+            item => item.userId === selectedCollaborators
+          ).columnLabels
+          const index = defaultColumns.indexOf(name)
+          return {
+            index,
+            name,
+            value
+          }
+        })
 
-    setQueryList([
-      {
-        id: 1,
-        selectedCollaborators: [],
-        selectedColumns: [],
-        columnValues: [],
-        expanded: true
+        submitColumns.push({
+          projectId: project.id,
+          creatorId: user.id,
+          receiverId: selectedCollaborators,
+          columnValues: columnList
+        })
       }
-    ])
+
+      const promises = submitColumns.map(query => {
+        return apiQuery.addQuery(query)
+      })
+
+      const responseQueries = await Promise.all(promises)
+
+      console.log({ responseQueries })
+      console.log('Submit form successfully !!')
+      setQueryList(intialState)
+      setSubmitLoading(false)
+    } catch (e) {
+      setSubmitLoading(false)
+    }
   }
 
   const handleOnChange = (queryIdx, columnIdx) => event => {
@@ -186,8 +256,15 @@ export default function CreateQuery() {
       )
     }).length === queryList.length
 
+  const { collaboratorsOnProject } = collaboratorState
+
   return (
     <Grid container>
+      {/* {submitLoading && (
+        <Grid item xs={12} style={{ padding: '24px 0px' }}>
+          <LinearProgress variant="query" />
+        </Grid>
+      )} */}
       <Grid item xs={12} container direction="row" justify="space-between">
         <Typography variant="h5">Create Query</Typography>
         <Button
@@ -225,85 +302,18 @@ export default function CreateQuery() {
                     Query #{id}
                   </Typography>
                 </ExpansionPanelSummary>
-                <ExpansionPanelDetails>
-                  <Grid container>
-                    <Grid
-                      item
-                      container
-                      xs={12}
-                      direction="row"
-                      alignItems="baseline"
-                    >
-                      <div>
-                        {idx > 0 && (
-                          <div
-                            style={{ position: 'absolute', top: 6, right: 12 }}
-                          >
-                            <IconButton
-                              component="span"
-                              onClick={removeQuery(idx)}
-                            >
-                              <DeleteForeverIcon />
-                            </IconButton>
-                          </div>
-                        )}
-                        <Typography className={classes.title} variant="p">
-                          Query On: &nbsp;
-                        </Typography>
-                      </div>
-                      <MultipleSelect
-                        required
-                        label="Create Query"
-                        data={collaboratorsOnProject}
-                        selected={selectedCollaborators}
-                        index={idx}
-                        name="selectedCollaborators"
-                        handleSelect={handleSelect}
-                      />
-                    </Grid>
-                    <Grid
-                      item
-                      container
-                      xs={12}
-                      direction="row"
-                      alignItems="baseline"
-                    >
-                      <div>
-                        <Typography className={classes.title} variant="p">
-                          Column List: &nbsp;
-                        </Typography>
-                      </div>
-                      <MultipleSelect
-                        required
-                        label="Columns"
-                        data={columnList}
-                        selected={selectedColumns}
-                        index={idx}
-                        name="selectedColumns"
-                        handleSelect={handleSelectColumns}
-                      />
-                    </Grid>
-                    <Grid
-                      item
-                      container
-                      xs={12}
-                      style={{ paddingTop: 18 }}
-                      direction="column"
-                    >
-                      <Typography className={classes.title} variant="p">
-                        Column Values: &nbsp;
-                      </Typography>
-                      {columnValues.map((item, columnIdx) => (
-                        <CustomTextfield
-                          key={columnIdx}
-                          label={item.name}
-                          value={item.value}
-                          onChange={handleOnChange(idx, columnIdx)}
-                        />
-                      ))}
-                    </Grid>
-                  </Grid>
-                </ExpansionPanelDetails>
+                <QueryForm
+                  selectedCollaborators={selectedCollaborators}
+                  collaboratorsOnProject={collaboratorsOnProject}
+                  classes={classes}
+                  idx={idx}
+                  columnValues={columnValues}
+                  selectedColumns={selectedColumns}
+                  handleSelectColumns={handleSelectColumns}
+                  handleSelect={handleSelect}
+                  removeQuery={removeQuery}
+                  handleOnChange={handleOnChange}
+                />
               </ExpansionPanel>
             )
           })}

@@ -7,6 +7,7 @@ import TableContainer from '@material-ui/core/TableContainer'
 import TableHead from '@material-ui/core/TableHead'
 import TableRow from '@material-ui/core/TableRow'
 import Paper from '@material-ui/core/Paper'
+import { getStatus } from '../../utils/formatString'
 
 const useStyles = makeStyles({
   table: {
@@ -17,7 +18,12 @@ const useStyles = makeStyles({
   }
 })
 
-export default function SimpleTable({ data = [], headCells = [], onRowClick }) {
+export default function SimpleTable({
+  data = [],
+  headCells = [],
+  onRowClick,
+  otherQuery = false
+}) {
   const classes = useStyles()
 
   return (
@@ -34,22 +40,35 @@ export default function SimpleTable({ data = [], headCells = [], onRowClick }) {
         </TableHead>
         <TableBody>
           {data.map((row, index) => {
-            const columns = []
-            Object.entries(row).forEach(([key, value]) => {
-              columns.push(value)
-            })
+            const {
+              id,
+              creatorId,
+              creatorName,
+              receiverId,
+              receiverName,
+              isQueryVectorReady,
+              truthEncodeAnswer,
+              encodeCipherAnswer
+            } = row
+            // const columns = []
+            // Object.entries(row).forEach(([key, value]) => {
+            //   columns.push(value)
+            // })
             return (
               <TableRow
                 className={classes.tableRow}
                 hover
-                onClick={onRowClick && onRowClick(row.id)}
-                key={index}
+                onClick={onRowClick && onRowClick(id, creatorId)}
+                key={id}
               >
-                {columns.map((col, idx) => (
-                  <TableCell align={idx === 0 ? 'left' : 'right'}>
-                    {col}
-                  </TableCell>
-                ))}
+                <TableCell align="left">{id}</TableCell>
+                <TableCell align="right">{creatorId}</TableCell>
+                {!otherQuery && (
+                  <TableCell align="right">{receiverId}</TableCell>
+                )}
+                <TableCell align="right">
+                  {getStatus(isQueryVectorReady, truthEncodeAnswer, otherQuery)}
+                </TableCell>
               </TableRow>
             )
           })}

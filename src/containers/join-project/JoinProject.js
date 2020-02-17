@@ -9,11 +9,11 @@ import Button from '@material-ui/core/Button'
 import { withStyles } from '@material-ui/core/styles'
 import CustomStepper from '../../components/stepper/CustomStepper'
 import { TextField } from '@material-ui/core'
-import CollaboratorCard from '../../components/card/CollaboratorCard'
-import { COLLABORATOR_TYPE } from '../../constants'
-import CustomTable from '../../components/table/CustomTable'
-import { FabAddIcon } from '../../components/fab-button/FabButton'
 import { projectRequest } from '../../constants/mockupData'
+import ReactFileReader from 'react-file-reader'
+import ContentList from '../list/ContentList'
+import baseAxios, { BASE_URL } from '../../api/baseAxios'
+import apiRequest from '../../api/apiRequest'
 
 const styles = theme => ({
   paper: {
@@ -62,58 +62,80 @@ const styles = theme => ({
   }
 })
 
-const collaboratorTypes = ['Public Collaborator', 'Private Collaborator']
-
 function getSteps() {
-  return ['Enter Metadata', 'Edit Configuration']
+  return ['Uload Metadata']
 }
 
-function JoinProject({ classes, projectReq = projectRequest }) {
+const init_metaData = {
+  dataName: '',
+  totalRow: 0,
+  totalCol: 0,
+  columnLabels: [],
+  pv_ratio: 0.01,
+  epsilon: 0.5,
+  sensitivity: 1.0,
+  prob: 0.95,
+  scale_up: 2
+}
+
+function JoinProject({ classes, projectReq = projectRequest, match }) {
   const history = useHistory()
 
-  const [form, setForm] = React.useState({
-    dataName: '',
-    totalRow: 0,
-    totalCol: 0,
-    factor: 0,
-    ratio: 0.0,
-    epsilon: 0.0
-  })
-
-  useEffect(() => {
-    setForm({ ...form, ...projectRequest })
-  }, [])
+  const [metaData, setMetaData] = useState(init_metaData)
+  const [fileName, setFileName] = useState('')
 
   const [activeStep, setActiveStep] = React.useState(0)
 
   const steps = getSteps()
 
-  const handleChange = name => event => {
-    setForm({ ...form, [name]: event.target.value })
+  const handleFiles = files => {
+    const jsonFile = files[0]
+    var readFile = new FileReader()
+    readFile.onload = e => {
+      const { name } = jsonFile
+      var contents = e.target.result
+      var json = JSON.parse(contents)
+      const newMeta = { ...json }
+
+      setFileName(name)
+      setMetaData(prevMeta => ({ ...prevMeta, ...newMeta }))
+    }
+
+    readFile.readAsText(jsonFile)
   }
 
   const handleNext = () => {
     if (activeStep === steps.length - 1) {
-      //   console.log({ ...form, selected, privateArray, collaType })
-      //   const project = {
-      //     ...form
-      //   }
-      history.push('/')
+      submitForm(metaData)
+      // history.push('/projects')
     } else {
       setActiveStep(prevActiveStep => prevActiveStep + 1)
     }
+  }
+
+  const submitForm = data => {
+    const { id } = match.params
+    console.log({ data })
+
+    // baseAxios
+    //   .put(`/projectRequest?requestId=${id}&status=true`, {
+    //     data
+    //   })
+
+    apiRequest
+      .acceptRequest(id, data)
+      .then(resJson => {
+        console.log({ resJson })
+        history.push('/projects')
+      })
+      .catch(e => console.log(e))
   }
 
   const handleBack = () => {
     console.log({ activeStep })
     switch (activeStep) {
       case 0: {
-        setForm({ ...form, dataName: '', totalRow: 0, totalCol: 0 })
-        break
-      }
-
-      case 1: {
-        setForm({ ...form, factor: 1, ratio: 0.001, epsilon: 0.95 })
+        // setForm({ ...form, dataName: '', totalRow: 0, totalCol: 0 })
         break
       }
     }
@@ -125,93 +147,38 @@ function JoinProject({ classes, projectReq = projectRequest }) {
   }
 
   const renderStep = () => {
-    const { dataName, totalRow, totalCol, factor, ratio, epsilon } = form
     switch (activeStep) {
       case 0:
         return (
           <Grid item container justify="center" xs={12}>
-            <TextField
-              required
-              id="standard-required"
-              label="Data Name"
-              value={dataName}
-              onChange={handleChange('dataName')}
-              variant="outlined"
-              style={{ width: '40%' }}
-            />
-            <TextField
-              required
-              label="Total Rows"
-              variant="outlined"
-              value={totalRow}
-              onChange={handleChange('totalRow')}
-              type="number"
-              style={{ width: '20%', margin: '0px 12px' }}
-              inputProps={{
-                min: 0
-              }}
-            />
-            <TextField
-              required
-              label="Total Columns"
-              variant="outlined"
-              value={totalCol}
-              type="number"
-              onChange={handleChange('totalCol')}
-              style={{ width: '20%' }}
-              inputProps={{
-                min: 0
-              }}
-            />
+            <Grid item container alignItems="center" justify="center" xs={12}>
+              <Grid item xs={8} md={10}>
+                <TextField
+                  value={fileName}
+                  // label="Upload MetaData JSON File"
+                  variant="outlined"
+                  fullWidth
+                  disabled
+                />
+              </Grid>
+              <Grid item xs={4} md={2} style={{ paddingLeft: 12 }}>
+                <ReactFileReader handleFiles={handleFiles} fileTypes=".json">
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    component="span"
+                    style={{ height: '100%' }}
+                  >
+                    Upload Metadata
+                  </Button>
+                </ReactFileReader>
+              </Grid>
+              <Grid item xs={12} container>
+                {metaData.dataName && <ContentList {...{ metaData }} />}
+              </Grid>
+            </Grid>
           </Grid>
         )
-        break
-
-      case 1:
-        return (
-          <Grid item container justify="center" xs={12}>
-            <TextField
-              required
-              id="standard-required"
-              label="Scale Up Factor"
-              value={factor}
-              onChange={handleChange('factor')}
-              variant="outlined"
-              type="number"
-              style={{ width: '40%' }}
-              inputProps={{
-                min: 0
-              }}
-            />
-            <TextField
-              required
-              label="PV Ratio"
-              variant="outlined"
-              value={ratio}
-              onChange={handleChange('ratio')}
-              type="number"
-              style={{ width: '20%', margin: '0px 12px' }}
-              inputProps={{
-                step: 0.001,
-                min: 0
-              }}
-            />
-            <TextField
-              required
-              label="Epsilon Value"
-              variant="outlined"
-              value={epsilon}
-              type="number"
-              onChange={handleChange('epsilon')}
-              style={{ width: '20%' }}
-              inputProps={{
-                step: 0.01,
-                min: 0
-              }}
-            />
-          </Grid>
-        )
-        break
 
       default:
         break
@@ -219,17 +186,10 @@ function JoinProject({ classes, projectReq = projectRequest }) {
   }
 
   const getDisableStatus = () => {
-    const { dataName, totalRow, totalCol, factor, ratio, epsilon } = form
-
     switch (activeStep) {
       case 0: {
-        return !(dataName && totalRow && totalCol)
+        return !metaData.dataName
       }
-
-      case 1: {
-        return !(factor && ratio && epsilon)
-      }
-
       default:
         return false
     }
@@ -254,7 +214,7 @@ function JoinProject({ classes, projectReq = projectRequest }) {
       <div className={classes.JoinProjectWrapper}>
         <Grid container>
           <Grid className={classes.listHeader} item xs={12}>
-            <Typography variant="h6">Create Project</Typography>
+            <Typography variant="h6">Join Project</Typography>
           </Grid>
           <Grid item xs={12}>
             <CustomStepper {...{ activeStep, steps }} />

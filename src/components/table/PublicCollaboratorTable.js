@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import PropTypes from 'prop-types'
 import clsx from 'clsx'
 import { lighten, makeStyles } from '@material-ui/core/styles'
@@ -18,7 +18,8 @@ import IconButton from '@material-ui/core/IconButton'
 import Tooltip from '@material-ui/core/Tooltip'
 import DeleteIcon from '@material-ui/icons/Delete'
 import FilterListIcon from '@material-ui/icons/FilterList'
-import { publicCollaboratorList } from '../../constants/mockupData'
+import apiUser from '../../api/apiUser'
+import { useSelector } from 'react-redux'
 
 function desc(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -53,13 +54,13 @@ const headCells = [
     disablePadding: true,
     label: 'Collaborator ID'
   },
-  { id: 'name', numeric: false, disablePadding: false, label: 'Name' },
-  {
-    id: 'description',
-    numeric: false,
-    disablePadding: false,
-    label: 'Description'
-  }
+  { id: 'name', numeric: false, disablePadding: false, label: 'Name' }
+  // {
+  //   id: 'description',
+  //   numeric: false,
+  //   disablePadding: false,
+  //   label: 'Description'
+  // }
 ]
 
 function EnhancedTableHead(props) {
@@ -112,16 +113,6 @@ function EnhancedTableHead(props) {
       </TableRow>
     </TableHead>
   )
-}
-
-EnhancedTableHead.propTypes = {
-  classes: PropTypes.object.isRequired,
-  numSelected: PropTypes.number.isRequired,
-  onRequestSort: PropTypes.func.isRequired,
-  onSelectAllClick: PropTypes.func.isRequired,
-  order: PropTypes.oneOf(['asc', 'desc']).isRequired,
-  orderBy: PropTypes.string.isRequired,
-  rowCount: PropTypes.number.isRequired
 }
 
 const useToolbarStyles = makeStyles(theme => ({
@@ -213,12 +204,32 @@ const useStyles = makeStyles(theme => ({
   }
 }))
 
-export default function CustomTable({ selected, setSelected }) {
+export default function PublicCollaboratorTable({ selected, setSelected }) {
   const classes = useStyles()
+  const user = useSelector(state => state.auth.user)
+
   const [order, setOrder] = React.useState('asc')
   const [orderBy, setOrderBy] = React.useState('name')
   const [page, setPage] = React.useState(0)
   const [rowsPerPage, setRowsPerPage] = React.useState(5)
+
+  const [collaborators, setCollaborators] = React.useState([])
+
+  useEffect(() => {
+    user &&
+      user.id &&
+      apiUser
+        .getCollaborators(user.id)
+        .then(res => {
+          const { data } = res
+          const collabs = data.map(item => {
+            const { stringId, username } = item
+            return { id: stringId, name: username }
+          })
+          setCollaborators(collabs)
+        })
+        .catch(e => console.log(e))
+  }, [])
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc'
@@ -228,7 +239,7 @@ export default function CustomTable({ selected, setSelected }) {
 
   const handleSelectAllClick = event => {
     if (event.target.checked) {
-      const newSelecteds = publicCollaboratorList.map(n => n.id)
+      const newSelecteds = collaborators.map(n => n.id)
       setSelected(newSelecteds)
       return
     }
@@ -268,7 +279,7 @@ export default function CustomTable({ selected, setSelected }) {
 
   const emptyRows =
     rowsPerPage -
-    Math.min(rowsPerPage, publicCollaboratorList.length - page * rowsPerPage)
+    Math.min(rowsPerPage, collaborators.length - page * rowsPerPage)
 
   return (
     <div className={classes.root}>
@@ -287,10 +298,10 @@ export default function CustomTable({ selected, setSelected }) {
               orderBy={orderBy}
               onSelectAllClick={handleSelectAllClick}
               onRequestSort={handleRequestSort}
-              rowCount={publicCollaboratorList.length}
+              rowCount={collaborators.length}
             />
             <TableBody>
-              {stableSort(publicCollaboratorList, getSorting(order, orderBy))
+              {stableSort(collaborators, getSorting(order, orderBy))
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((row, index) => {
                   const isItemSelected = isSelected(row.id)
@@ -318,12 +329,12 @@ export default function CustomTable({ selected, setSelected }) {
                         scope="row"
                         padding="none"
                       >
-                        {row.id}
+                        {index + 1}
                       </TableCell>
                       <TableCell component="th">{row.name}</TableCell>
-                      <TableCell component="th" align="right">
+                      {/* <TableCell component="th" align="right">
                         {row.description}
-                      </TableCell>
+                      </TableCell> */}
                     </TableRow>
                   )
                 })}
@@ -338,7 +349,7 @@ export default function CustomTable({ selected, setSelected }) {
         <TablePagination
           rowsPerPageOptions={[5, 10, 25]}
           component="div"
-          count={publicCollaboratorList.length}
+          count={collaborators.length}
           rowsPerPage={rowsPerPage}
           page={page}
           onChangePage={handleChangePage}

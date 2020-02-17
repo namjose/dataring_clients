@@ -177,7 +177,7 @@ export default function SimpleExpansionPanel() {
                             </IconButton>
                           </div>
                         )}
-                        <Typography className={classes.title} variant="p">
+                        <Typography className={classes.title} variant="body1">
                           Query On: &nbsp;
                         </Typography>
                       </div>
@@ -199,7 +199,7 @@ export default function SimpleExpansionPanel() {
                       alignItems="baseline"
                     >
                       <div>
-                        <Typography className={classes.title} variant="p">
+                        <Typography className={classes.title} variant="body1">
                           Column List: &nbsp;
                         </Typography>
                       </div>
@@ -220,7 +220,7 @@ export default function SimpleExpansionPanel() {
                       style={{ paddingTop: 18 }}
                       direction="column"
                     >
-                      <Typography className={classes.title} variant="p">
+                      <Typography className={classes.title} variant="body1">
                         Column Values: &nbsp;
                       </Typography>
                       {selectedColumns.map((item, index) => (

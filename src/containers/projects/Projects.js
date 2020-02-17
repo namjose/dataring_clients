@@ -12,6 +12,11 @@ import CustomCard from '../../components/card/CustomCard'
 import { projectList } from '../../constants/mockupData'
 import CustomDialog from '../../components/dialog/CustomDialog'
 import { DialogContext } from '../../contexts/dialogContext'
+import apiProject from '../../api/apiProject'
+import { useSelector, useDispatch } from 'react-redux'
+import { BASE_URL } from '../../api/baseAxios'
+import { fetchProjectAction } from '../../actions/projectAction'
+import { FETCH_PROJECT } from '../../constants/actionTypes'
 
 const styles = theme => ({
   paper: {
@@ -48,16 +53,27 @@ const styles = theme => ({
 
 function Projects(props) {
   const { classes } = props
+  const dispatch = useDispatch()
   const history = useHistory()
   const context = useContext(DialogContext)
   const { handleOpen, handleClose, open } = context
 
-  const [projects, setProjects] = React.useState(projectList)
+  const { user } = useSelector(state => state.auth)
+  const userId = user ? user.id : null
+
+  const projectState = useSelector(state => state.projectReducer)
+
+  const { projects } = projectState
+  // console.log({ projects })
 
   const [searchText, setSearchText] = React.useState('')
 
+  // useEffect(() => {
+  //   !projects.length && handleOpen()
+  // }, [])
+
   useEffect(() => {
-    !projects.length && handleOpen()
+    dispatch(fetchProjectAction(userId))
   }, [])
 
   const handleAgree = () => {
@@ -73,6 +89,8 @@ function Projects(props) {
     const search = event.target.value
     setSearchText(search)
   }
+
+  console.log({ projects })
 
   return (
     <Paper className={classes.paper}>

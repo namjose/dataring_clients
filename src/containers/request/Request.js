@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useReducer, useEffect } from 'react'
 import AppBar from '@material-ui/core/AppBar'
 import Toolbar from '@material-ui/core/Toolbar'
 import Typography from '@material-ui/core/Typography'
@@ -10,6 +10,8 @@ import Tooltip from '@material-ui/core/Tooltip'
 import IconButton from '@material-ui/core/IconButton'
 import { withStyles } from '@material-ui/core/styles'
 import RequestTable from './RequestTable'
+import apiRequest from '../../api/apiRequest'
+import { useSelector } from 'react-redux'
 
 const styles = theme => ({
   paper: {
@@ -34,9 +36,61 @@ const styles = theme => ({
   }
 })
 
+const initialState = {
+  requests: [],
+  loading: false
+}
+
+const reducer = (state, action) => {
+  switch (action.type) {
+    case 'FETCH_DATA': {
+      return { ...state, loading: true }
+    }
+
+    case 'FETCH_DATA_SUCCEEDED': {
+      const { requests } = action.payload
+      return { ...state, requests: requests, loading: false }
+    }
+
+    case 'FETCH_DATA_FAILED': {
+      return { ...state, loading: false, requests: [] }
+    }
+
+    default: {
+      return state
+    }
+  }
+}
+
 function Request(props) {
   const { classes } = props
+  const user = useSelector(state => state.auth.user)
 
+  const [state, dispatch] = useReducer(reducer, initialState)
+
+  useEffect(() => {
+    if (user && user.id) {
+      dispatch({ type: 'FETCH_DATA' })
+      apiRequest
+        .getRequestById(user.id)
+        .then(res => {
+          const { data } = res
+          const requests = data.map(item => {
+            return {
+              id: item.stringId,
+              name: item.creatorName,
+              title: item.title
+            }
+          })
+          dispatch({ type: 'FETCH_DATA_SUCCEEDED', payload: { requests } })
+        })
+        .catch(e => {
+          dispatch({ type: 'FETCH_DATA_FAILED' })
+        })
+    }
+  }, [user])
+
+  const { requests, loading } = state
   return (
     <Paper className={classes.paper}>
       <AppBar
@@ -54,7 +108,11 @@ function Request(props) {
         </Toolbar>
       </AppBar>
       <div className={classes.ResultWrapper}>
-        <RequestTable />
+        {loading ? (
+          <Typography>Loading...</Typography>
+        ) : (
+          <RequestTable rows={requests} />
+        )}
       </div>
     </Paper>
   )

@@ -1,0 +1,62 @@
+const initialState = {
+  queryVector: [],
+  loading: true,
+  loadCount: 0
+}
+
+const reducer = (state, action) => {
+  switch (action.type) {
+    case 'LOAD_COUNT_INCREMENT':
+      return { ...state, loadCount: state.loadCount + 1 }
+
+    case 'LOAD_QUERY_VECTOR_SUCCESSFUL': {
+      const { queryVector } = action.payload
+      return { ...state, queryVector, loadCount: 10, loading: false }
+    }
+
+    case 'LOAD_QUERY_VECTOR_FAILED':
+      return { ...initialState, loading: false }
+
+    default:
+      return state
+  }
+}
+
+
+const [queryState, dispatch] = useReducer(reducer, initialState)
+
+const loadQueryVector = async () => {
+  const requestURLs = []
+  const sizeOffset = TOTAL_SIZE_QV / LIMIT
+  for (let offset = 0; offset < sizeOffset; offset++) {
+    requestURLs.push(
+      `/query/vector/5e3ea16ff463704efc8cfcf1?limit=${LIMIT}&offset=${offset *
+        LIMIT}`
+    )
+  }
+
+  const queryVector = []
+
+  for (const [idx, url] of requestURLs.entries()) {
+    try {
+      const batchData = await baseAxios.get(url)
+      console.log(`Received Batch ${idx + 1}:`, batchData)
+      const subset = batchData.data
+      queryVector.push(...subset)
+      dispatch({ type: 'LOAD_COUNT_INCREMENT' })
+      // setSampleVector(oldVector => [...oldVector, ...subset])
+      // setLoadCount(idx + 1)
+    } catch (e) {
+      console.log('Error in Batch ' + (idx + 1))
+      break
+    }
+  }
+
+  console.log({ queryVector })
+  dispatch({
+    type: 'LOAD_QUERY_VECTOR_SUCCESSFUL',
+    payload: { queryVector }
+  })
+
+  console.log('Finished! Load query vector successfully !!!')
+}

@@ -13,7 +13,9 @@ import { withStyles } from '@material-ui/core/styles'
 import AccountCircle from '@material-ui/icons/AccountCircle'
 import { Menu, MenuItem, ButtonBase } from '@material-ui/core'
 import { useHistory } from 'react-router-dom'
-import { connect } from 'react-redux'
+import { connect, useDispatch } from 'react-redux'
+import { signOut } from '../../actions/authActions'
+import { SIGN_OUT } from '../../constants/actionTypes'
 
 const lightColor = 'rgba(255, 255, 255, 0.7)'
 
@@ -44,7 +46,8 @@ const styles = theme => ({
 })
 
 function Header({ classes, onDrawerToggle, headerTitle, user }) {
-  const history = useHistory()
+  const dispatch = useDispatch()
+  console.log({ user })
 
   const [auth, setAuth] = React.useState(true)
   const [anchorEl, setAnchorEl] = React.useState(null)
@@ -64,7 +67,7 @@ function Header({ classes, onDrawerToggle, headerTitle, user }) {
 
   const logOut = () => {
     handleClose()
-    history.push('/signIn')
+    dispatch(signOut())
   }
 
   return (
@@ -77,7 +80,7 @@ function Header({ classes, onDrawerToggle, headerTitle, user }) {
             alignItems="center"
             className={classes.headerContainer}
           >
-            <Hidden smUp>
+            <Hidden mdUp>
               <Grid item>
                 <IconButton
                   color="inherit"
@@ -111,7 +114,7 @@ function Header({ classes, onDrawerToggle, headerTitle, user }) {
                     disableTouchRipple
                   >
                     <AccountCircle /> &nbsp;&nbsp;
-                    <Typography>Hi, Hoang Nam</Typography>
+                    <Typography>Hi, {user.username}</Typography>
                   </ButtonBase>
                   <Menu
                     id="menu-appbar"

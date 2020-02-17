@@ -19,7 +19,7 @@ import palletes from '../../constants/palletes'
 import { Divider, Button, Grid } from '@material-ui/core'
 import { queryDetail } from '../../constants/mockupData'
 import moment from 'moment'
-import { capitlizeString } from '../../utils/formatString'
+import { capitlizeString, getStatus } from '../../utils/formatString'
 
 const useStyles = makeStyles(theme => ({
   card: {
@@ -54,20 +54,36 @@ const useStyles = makeStyles(theme => ({
   }
 }))
 
-export default function DetailCard({ detail = queryDetail, queryId }) {
+export default function DetailCard({ detail = queryDetail }) {
   const classes = useStyles()
-  const [expanded, setExpanded] = React.useState(false)
-
   const {
     id,
-    publishDate,
-    collaborators,
+    creatorName,
+    receiverName,
     columnValues,
-    status,
+    isQueryVectorReady,
+    encodeCipherAnswer,
+    truthEncodeAnswer,
     result
   } = detail
 
   console.log({ detail })
+
+  const downloadFile = async () => {
+    const myData = {
+      encodeCipherAnswer: truthEncodeAnswer
+    }
+    const fileName = 'query_answer'
+    const json = JSON.stringify(myData)
+    const blob = new Blob([json], { type: 'application/json' })
+    const href = await URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = href
+    link.download = fileName + '.json'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
 
   return (
     <>
@@ -75,17 +91,20 @@ export default function DetailCard({ detail = queryDetail, queryId }) {
         <Card className={classes.card}>
           <CardHeader
             title="Description"
-            subheader={`Status: ${status}`}
+            subheader={`Status: ${getStatus(
+              isQueryVectorReady,
+              truthEncodeAnswer
+            )}`}
             className={classes.cardHeader}
             content
           />
           <CardContent>
             <Typography paragraph>
-              <b>Query ID:</b> #{`${queryId}`}
+              <b>Query ID:</b> {`${id}`}
             </Typography>
-            <Typography paragraph>
+            {/* <Typography paragraph>
               <b>Publish Date:</b> {moment(publishDate).format('DD-MM-YYYY')}
-            </Typography>
+            </Typography> */}
             <Grid container alignItems="baseline">
               <Typography paragraph>
                 <b>Query Creator:</b>
@@ -96,24 +115,21 @@ export default function DetailCard({ detail = queryDetail, queryId }) {
                 disableFocusRipple
                 disableRipple
               >
-                Party A
+                {creatorName}
               </Button>
             </Grid>
             <Grid container alignItems="baseline" style={{ marginTop: 18 }}>
               <Typography paragraph>
                 <b>Query On:</b>
               </Typography>
-              {collaborators.map((item, idx) => (
-                <Button
-                  key={idx}
-                  className={classes.buttonStyle}
-                  variant="outlined"
-                  disableFocusRipple
-                  disableRipple
-                >
-                  {item.name}
-                </Button>
-              ))}
+              <Button
+                className={classes.buttonStyle}
+                variant="outlined"
+                disableFocusRipple
+                disableRipple
+              >
+                {receiverName}
+              </Button>
             </Grid>
           </CardContent>
         </Card>
@@ -137,14 +153,19 @@ export default function DetailCard({ detail = queryDetail, queryId }) {
           </CardContent>
         </Card>
       </Grid>
-      {status === 'Done' && (
+      {truthEncodeAnswer && (
         <Grid item xs={12} style={{ marginTop: 24 }}>
           <Card className={classes.card}>
             <CardHeader title="Result" className={classes.cardHeader} content />
             <CardContent>
-              <Typography paragraph>
-                <b>Total matching rows:</b> {result}
-              </Typography>
+              <Button
+                //   disabled={loadingSV}
+                variant="contained"
+                color="primary"
+                onClick={downloadFile}
+              >
+                Download Encrypted Answer
+              </Button>
             </CardContent>
           </Card>
         </Grid>
