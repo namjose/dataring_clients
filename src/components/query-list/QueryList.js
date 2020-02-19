@@ -57,13 +57,15 @@ const QueryList = ({ project }) => {
         const [resQ, resT] = res
         const { data: dataQ } = resQ
         const { data: dataT } = resT
-        const formatData0 = formatting.formatDataFromAPI(dataQ)
+        const formatData0 = formatting.formatData(dataQ)
         const formatDataT = formatting.formatDataFromAPI(dataT)
 
         const mergeData = [...formatData0, ...formatDataT]
 
         const myQueries = mergeData.filter(item => item.creatorId === user.id)
-        const recQueries = mergeData.filter(item => item.receiverId === user.id)
+        const recQueries = mergeData.filter(
+          item => item.receiverId === user.id && item.isQueryVectorReady
+        )
 
         console.log({ myQueries, recQueries })
         dispatch({
@@ -102,7 +104,7 @@ const QueryList = ({ project }) => {
         justify="space-between"
         style={{ marginTop: 48 }}
       >
-        <Typography variant="h5">Recevied Query List</Typography>
+        <Typography variant="h5">Partner's Query List</Typography>
       </Grid>
       <Grid item xs={12} style={{ margin: '24px 0px' }}>
         {recQueries.length ? (

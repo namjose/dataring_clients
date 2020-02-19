@@ -1,4 +1,4 @@
-import { BASE_URL } from './baseAxios'
+import baseAxios, { BASE_URL } from './baseAxios'
 
 export const apiAuth = {
   loginEmail: (email, password) =>
@@ -8,5 +8,11 @@ export const apiAuth = {
         email,
         password
       })
+    }),
+  signUp: (username, email, password) =>
+    baseAxios.post('user/signUp', {
+      username,
+      email,
+      password
     })
 }

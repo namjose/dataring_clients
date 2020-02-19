@@ -79,10 +79,13 @@ export default function ReceiveQueryCard({ detail = queryDetail }) {
     isQueryVectorReady,
     truthEncodeAnswer,
     encodeCipherAnswer,
-    vectorSize
+    vectorSize,
+    verified
   } = detail
 
-  const apiType = queryId ? 'testFunction' : 'query'
+  console.log({ detail })
+
+  const apiType = verified ? 'testFunction' : 'query'
   const totalSize = vectorSize
 
   const [queryState, setQueryState] = useState(intialState)
@@ -198,7 +201,7 @@ export default function ReceiveQueryCard({ detail = queryDetail }) {
                   color="primary"
                   onClick={handleDowload}
                 >
-                  Download Sample Vector
+                  Download Query Vector
                 </Button>
                 <CSVLink
                   data={vector}
@@ -303,25 +306,43 @@ export default function ReceiveQueryCard({ detail = queryDetail }) {
           </CardContent>
         </Card>
       </Grid>
-      <Grid item xs={12} style={{ marginTop: 24 }}>
-        <Card className={classes.card}>
-          <CardHeader
-            title="Column Values"
-            subheader={`Total columns: ${columnValues.length}`}
-            className={classes.cardHeader}
-            content
-          />
-          <CardContent>
-            {columnValues.map((item, index) => {
-              return (
-                <Typography key={index} paragraph>
-                  <b>{capitlizeString(item.name)}</b>: {item.value}
-                </Typography>
-              )
-            })}
-          </CardContent>
-        </Card>
-      </Grid>
+      {columnValues && columnValues.length ? (
+        <Grid item xs={12} style={{ marginTop: 24 }}>
+          <Card className={classes.card}>
+            <CardHeader
+              title="Column Values"
+              subheader={`Total columns: ${columnValues.length}`}
+              className={classes.cardHeader}
+              content
+            />
+            <CardContent>
+              {columnValues.map((item, index) => {
+                return (
+                  <Typography key={index} paragraph>
+                    <b>{capitlizeString(item.name)}</b>: {item.value}
+                  </Typography>
+                )
+              })}
+            </CardContent>
+          </Card>
+        </Grid>
+      ) : (
+        <Grid item xs={12} style={{ marginTop: 24 }}>
+          <Card className={classes.card}>
+            <CardHeader
+              title="Column Values"
+              // subheader={`Total columns: ${columnValues.length}`}
+              className={classes.cardHeader}
+              content
+            />
+            <CardContent>
+              <Typography paragraph>
+                <b>All columns </b>
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      )}
       {isQueryVectorReady && (
         <Grid item xs={12} style={{ marginTop: 24 }}>
           <Card className={classes.card}>

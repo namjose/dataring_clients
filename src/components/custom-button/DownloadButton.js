@@ -33,7 +33,7 @@ export default function DownloadButton({
       <CSVLink
         data={data}
         headers={headers}
-        filename="sample-vector.csv"
+        filename="sample_vector.csv"
         target="_blank"
         ref={csvLink}
         hidden

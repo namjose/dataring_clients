@@ -58,9 +58,9 @@ export const collaboratorStatusData = [
 ]
 
 export const collaboratorStatusHead = [
-  'Collaborator ID',
-  'Collaborator Name',
-  'Status'
+  'Collaborator ID'
+  // 'Collaborator Name',
+  // 'Status'
 ]
 
 function createQuery(id, creator, queryOn, result, status) {

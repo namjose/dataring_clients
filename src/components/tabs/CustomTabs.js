@@ -35,7 +35,7 @@ export default function CustomTabs({
 }) {
   const classes = useStyles()
 
-  const [value, setValue] = React.useState(4)
+  const [value, setValue] = React.useState(0)
 
   const handleChange = (event, newValue) => {
     setValue(newValue)
@@ -46,8 +46,8 @@ export default function CustomTabs({
 
     const formatCollaborators = collaborators.map((item, idx) => {
       return {
-        id: item,
-        name: item
+        id: item
+        // name: item
         // status: 'Ready'
       }
     })

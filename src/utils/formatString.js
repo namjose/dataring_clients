@@ -4,10 +4,10 @@ export function capitlizeString(word) {
 
 export const getStatus = (
   isQueryVectorReady,
-  encodeCipherAnswer,
+  truthEncodeAnswer,
   otherQuery
 ) => {
-  if (encodeCipherAnswer) {
+  if (truthEncodeAnswer) {
     return 'Ready'
   } else {
     if (otherQuery) {

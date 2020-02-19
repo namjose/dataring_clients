@@ -157,7 +157,7 @@ export default function RequestTable({ rows = [] }) {
                       <TableCell component="th" id={labelId} scope="row">
                         {index + 1}
                       </TableCell>
-                      <TableCell>{row.creator}</TableCell>
+                      <TableCell>{row.name}</TableCell>
                       <TableCell>{row.title}</TableCell>
                       <TableCell>
                         <Button

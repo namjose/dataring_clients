@@ -68,12 +68,10 @@ function Projects(props) {
 
   const [searchText, setSearchText] = React.useState('')
 
-  // useEffect(() => {
-  //   !projects.length && handleOpen()
-  // }, [])
-
   useEffect(() => {
     dispatch(fetchProjectAction(userId))
+
+    // !projects.length && handleOpen()
   }, [])
 
   const handleAgree = () => {

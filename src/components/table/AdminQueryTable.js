@@ -19,6 +19,20 @@ const useStyles = makeStyles({
   }
 })
 
+const status = (encodeCipherAnswer, truthEncodeAnswer, isQueryVectorReady) => {
+  if (!isQueryVectorReady) {
+    return 'Vector is not ready'
+  } else {
+    if (encodeCipherAnswer && truthEncodeAnswer) {
+      return 'Answer ready'
+    } else if (encodeCipherAnswer && !truthEncodeAnswer) {
+      return 'Answer uploaded'
+    } else {
+      return 'Vector is ready'
+    }
+  }
+}
+
 export default function AdminQueryTable({ data = [], handleMakeVector }) {
   const history = useHistory()
   const classes = useStyles()
@@ -54,7 +68,12 @@ export default function AdminQueryTable({ data = [], handleMakeVector }) {
         </TableHead>
         <TableBody>
           {rows.map(row => {
-            const { isQueryVectorReady, id, truthEncodeAnswer } = row
+            const {
+              isQueryVectorReady,
+              id,
+              truthEncodeAnswer,
+              encodeCipherAnswer
+            } = row
             return (
               <TableRow key={row.id}>
                 <TableCell component="th" scope="row">
@@ -64,7 +83,12 @@ export default function AdminQueryTable({ data = [], handleMakeVector }) {
                   {renderMakeVector(id, isQueryVectorReady)}
                 </TableCell>
                 <TableCell align="right">
-                  {getStatus(isQueryVectorReady, truthEncodeAnswer, false)}
+                  {status(
+                    encodeCipherAnswer,
+                    truthEncodeAnswer,
+                    isQueryVectorReady
+                  )}
+                  {/* {getStatus(isQueryVectorReady, truthEncodeAnswer, false)} */}
                 </TableCell>
               </TableRow>
             )

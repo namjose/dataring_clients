@@ -35,7 +35,7 @@ export default function AdminTestTable({
       <Button
         variant="contained"
         color="primary"
-        disabled={!encodeCipherAnswer}
+        disabled={!encodeCipherAnswer || verified !== 'none'}
         onClick={handleVerify && handleVerify(id)}
       >
         Verify

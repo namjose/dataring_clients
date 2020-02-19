@@ -126,7 +126,7 @@ function ProjectDetail(props) {
 
     console.log('Finished!' + 'vector size: ' + vector.length)
     setSampleVector(vector)
-    setLoadingSV(false)
+    setLoadingSV(false) q
   }
 
   const [partialViewState, setPartialViewState] = useState({

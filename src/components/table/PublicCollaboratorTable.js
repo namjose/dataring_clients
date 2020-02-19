@@ -329,7 +329,7 @@ export default function PublicCollaboratorTable({ selected, setSelected }) {
                         scope="row"
                         padding="none"
                       >
-                        {index + 1}
+                        {row.id}
                       </TableCell>
                       <TableCell component="th">{row.name}</TableCell>
                       {/* <TableCell component="th" align="right">

@@ -134,7 +134,7 @@ export const UploadPartialView = ({
                 </Button>
                 <CSVLink
                   data={sampleVector.map(row => ({ ciphertext: row }))}
-                  filename="sample-vector.csv"
+                  filename="sample_vector.csv"
                   target="_blank"
                   ref={csvLink}
                   hidden

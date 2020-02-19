@@ -12,5 +12,9 @@ export default {
   verifyByTestId: testId =>
     baseAxios.post(`testFunction/verify?testFuncId=${testId}`),
   makeVector: testId =>
-    baseAxios.post(`testFunction/vector/add?testFuncId=${testId}`)
+    baseAxios.post(`testFunction/vector/add?testFuncId=${testId}`),
+  createTestFunction: data =>
+    baseAxios.post('testFunction/add', {
+      ...data
+    })
 }

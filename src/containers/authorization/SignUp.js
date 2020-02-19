@@ -18,6 +18,8 @@ import {
 } from '@material-ui/core'
 import Visibility from '@material-ui/icons/Visibility'
 import VisibilityOff from '@material-ui/icons/VisibilityOff'
+import { apiAuth } from '../../api/apiAuth'
+import { signInSuccesful } from '../../actions/authActions'
 
 const styles = (theme: Theme) =>
   createStyles({
@@ -103,25 +105,20 @@ class SignUp extends React.Component {
 
   _handleSubmit = event => {
     event.preventDefault()
-    const { email, password } = this.state
-    // if (email && password) {
-    //   auth
-    //     .createUserWithEmailAndPassword(email, password)
-    //     .then(user => user)
-    //     .catch(error => {
-    //       const errorCode = error.code;
-    //       const errorMessage = error.message;
-    //       if (errorCode == "auth/weak-password") {
-    //         alert("The password is too weak.");
-    //       } else {
-    //         alert(errorMessage);
-    //       }
-    //     });
-    // }
-
-    this.setState({ email: '', password: '' })
-
-    this.props.history.push('/')
+    const { email, password, displayName } = this.state
+    apiAuth
+      .signUp(displayName, email, password)
+      .then(res => {
+        const { data } = res
+        const { stringId, email, username, isAdmin } = data
+        const user = { id: stringId, email, username, isAdmin }
+        this.setState({ email: '', password: '' })
+        this.props.signInSuccesful(user)
+      })
+      .catch(() => {
+        this.props.history.push('/temp')
+        this.props.history.goBack()
+      })
   }
 
   render() {
@@ -222,4 +219,7 @@ class SignUp extends React.Component {
   }
 }
 
+const mapDispatchToProps = {
+  signInSuccesful
+}
 export default withStyles(styles)(SignUp)

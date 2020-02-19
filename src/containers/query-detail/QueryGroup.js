@@ -168,6 +168,21 @@ function QueryGroup(props) {
       })
   }
 
+  const createTestFunction = (creatorId, receiverId, type) => event => {
+    dispatch({ type: 'FETCH_DATA' })
+    apiTestFunc
+      .createTestFunction({
+        projectId,
+        creatorId,
+        receiverId,
+        type
+      })
+      .then(res => {
+        fetchData()
+      })
+      .catch(e => dispatch({ type: 'FETCH_DATA_FAILED' }))
+  }
+
   const getTabContent = tabIdx => {
     const { queryList, testList } = state
 
@@ -205,7 +220,7 @@ function QueryGroup(props) {
                 disabled={!(allTestVerified && allQueriesHaveAnswer)}
                 onClick={reProcessAllQuery}
               >
-                Re-Process All Answer
+                Release Answer For All Queries
               </Button>
             </Grid>
             {queryListA.length > 0 && (
@@ -281,19 +296,39 @@ function QueryGroup(props) {
             >
               <Typography variant="h5">Test Function List</Typography>
             </Grid>
-            {listA.length > 0 && (
-              <Grid
-                item
-                xs={12}
-                container
-                direction="row"
-                justify="space-between"
+            <Grid
+              item
+              xs={12}
+              container
+              direction="row"
+              justify="space-between"
+              style={{ marginTop: 24 }}
+            >
+              <Typography variant="h6">
+                {creatorName} - {receiverName}
+              </Typography>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={createTestFunction(creatorId, receiverId, 0)}
               >
-                <Typography variant="h6">
-                  {creatorName} - {receiverName}
-                </Typography>
-              </Grid>
-            )}
+                Create Test Function 1
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={createTestFunction(creatorId, receiverId, 1)}
+              >
+                Create Test Function 2
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={createTestFunction(creatorId, receiverId, 2)}
+              >
+                Create Test Function 3
+              </Button>
+            </Grid>
 
             <Grid item xs={12} style={{ margin: '24px 0px' }}>
               {listA.length ? (
@@ -308,19 +343,38 @@ function QueryGroup(props) {
                 <Typography>No results</Typography>
               )}
             </Grid>
-            {listB.length > 0 && (
-              <Grid
-                item
-                xs={12}
-                container
-                direction="row"
-                justify="space-between"
+            <Grid
+              item
+              xs={12}
+              container
+              direction="row"
+              justify="space-between"
+            >
+              <Typography variant="h6">
+                {receiverName} - {creatorName}
+              </Typography>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={createTestFunction(receiverId, creatorId, 0)}
               >
-                <Typography variant="h6">
-                  {receiverName} - {creatorName}
-                </Typography>
-              </Grid>
-            )}
+                Create Test Function 1
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={createTestFunction(receiverId, creatorId, 1)}
+              >
+                Create Test Function 2
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={createTestFunction(receiverId, creatorId, 2)}
+              >
+                Create Test Function 3
+              </Button>
+            </Grid>
             <Grid item xs={12} style={{ margin: '24px 0px' }}>
               {listB.length ? (
                 <AdminTestTable

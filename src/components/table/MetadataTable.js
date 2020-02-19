@@ -173,7 +173,7 @@ export default function MetadataTable({ project }) {
     const { id, isPVReady, verified } = row
     return (
       <Button
-        disabled={isPVReady && verified !== 'none'}
+        disabled={!isPVReady || verified !== 'none'}
         variant="contained"
         color="primary"
         onClick={_hanldeVerifyPV(id)}
